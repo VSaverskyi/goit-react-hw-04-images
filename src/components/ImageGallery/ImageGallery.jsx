@@ -33,15 +33,15 @@ class ImageGallery extends Component {
         if (prevSearch !== nextSearch) {
             this.setState({ status: Status.PENDING });
 
-            this.setState({ pageNumber: 1 });
-
             try {
-                const response = await pixabayApi.fetchImages(nextSearch, pageNumber, perPage);
+                const response = await pixabayApi.fetchImages(nextSearch, 1, perPage);
                 const images = response.data.hits;
                 this.setState({ images, status: Status.RESOLVED });
             } catch (error) {
                 this.setState({ error, status: Status.REJECTED });
-            } 
+            }
+
+            this.setState({ pageNumber: 1 });
         }
 
         if (prevPage < pageNumber) {
@@ -52,31 +52,31 @@ class ImageGallery extends Component {
                 const response = await pixabayApi.fetchImages(nextSearch, pageNumber, perPage);
                 const totalPage = response.data.totalHits / perPage;
                 if (pageNumber > totalPage) {
-                    this.setState({buttonIsActive: false});
+                    this.setState({ buttonIsActive: false });
                 }
                 const newImages = response.data.hits;
-                
-                this.setState((prevState) => ({images: [...prevState.images, ...newImages]}))
+
+                this.setState((prevState) => ({ images: [...prevState.images, ...newImages] }))
             } catch (error) {
-                return <ImagesErrorView message={error.message}/>;
-            } 
+                return <ImagesErrorView message={error.message} />;
+            }
         }
     }
 
     handleLoadMoreBtnClick = () => {
 
-        this.setState(({pageNumber}) => ({ pageNumber: pageNumber + 1 }));
+        this.setState(({ pageNumber }) => ({ pageNumber: pageNumber + 1 }));
     }
 
     render() {
         const { images, error, status } = this.state;
 
         if (status === 'pending') {
-            return <ImagesPendingView/>;
+            return <ImagesPendingView />;
         }
 
         if (status === 'rejected') {
-            return <ImagesErrorView message={error.message}/>;
+            return <ImagesErrorView message={error.message} />;
         }
 
         if (status === 'resolved') {
