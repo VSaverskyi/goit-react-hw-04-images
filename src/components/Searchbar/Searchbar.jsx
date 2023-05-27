@@ -1,4 +1,4 @@
-import { Component } from "react";
+import React, { useState } from "react";
 import { Formik, ErrorMessage } from "formik";
 import * as yup from 'yup';
 import PropTypes from "prop-types";
@@ -6,35 +6,32 @@ import { SearchBarHeader, SearchForm, SearchFormBtn, SearchFormBtnLabel, SearchF
 
 const schema = yup.string().required();
 
-class SearchBar extends Component {
-    state = {
-        searchingImage: '',
-    }
+const SearchBar = ({onSubmit}) => {
+    const [searchingImage, setSearchingImage] = useState('');
 
-    handleSearchChange = event => {
-        this.setState({ searchingImage: event.target.value.toLowerCase() });
+    const handleSearchChange = event => {
+        setSearchingImage(event.target.value.toLowerCase());
     };
 
-    handleSubmit = (values, {resetForm}) => {
+    const handleSubmit = (values, {resetForm}) => {
 
-        if (this.state.searchingImage.trim() === '') {
+        if (searchingImage.trim() === '') {
             alert('Please, enter image name!');
             return;
         }
 
-        this.props.onSubmit(this.state.searchingImage);
+        onSubmit(searchingImage);
         resetForm();
     };
 
-    render() {
         return (
-            <SearchBarHeader>
-                <Formik
-                    initialValues={{ searchingImage: ''}}
-                    onSubmit={this.handleSubmit}
-                    validationSchema={schema}
-                >
-                    <SearchForm>
+        <SearchBarHeader>
+            <Formik
+                initialValues={{ searchingImage: ''}}
+                onSubmit={handleSubmit}
+                validationSchema={schema}
+            >
+                <SearchForm>
                     <SearchFormBtn
                         type="submit">
                         <SearchFormBtnLabel>
@@ -44,18 +41,20 @@ class SearchBar extends Component {
                     <SearchFormInput
                         type="text"
                         name="searchingImage"
-                        value={this.state.searchingImage}
-                        onChange={this.handleSearchChange}
+                        value={searchingImage}
+                        onChange={handleSearchChange}
                         autoComplete="off"
                         autoFocus
                         placeholder="Search images and photos"
-                        />
-                        <ErrorMessage name="searchingImage" component="div"/>
+                    />
+                    <ErrorMessage
+                        name="searchingImage"
+                        component="div"
+                    />
                 </SearchForm>
-                </Formik>
-            </SearchBarHeader>
-        )
-    }
+            </Formik>
+        </SearchBarHeader>
+    )
 }
 
 export default SearchBar;
