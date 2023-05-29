@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { useState, useEffect } from "react";
 import pixabayApi from '../../services/pixabay-api';
 import ImagesDataView from "components/ImagesDataView";
 import ImagesPendingView from "components/ImagesPendingView";
@@ -12,76 +12,81 @@ const Status = {
     REJECTED: 'rejected',
 };
 
-// let page;
 const perPage = 12;
 
-class ImageGallery extends Component {
-    state = {
-        images: [],
-        error: '',
-        status: Status.IDLE,
-        buttonIsActive: true,
-        pageNumber: 1,
-    };
+const ImageGallery = ({searchingImage}) => {
 
-    async componentDidUpdate(prevProps, prevState) {
-        const prevSearch = prevProps.searchingImage;
-        const nextSearch = this.props.searchingImage;
-        const prevPage = prevState.pageNumber;
-        const { pageNumber, buttonIsActive } = this.state;
+    const [images, setImages] = useState([]);
+    const [error, setError] = useState(null);
+    const [status, setStatus] = useState(Status.IDLE);
+    const [buttonIsActive, setButtonIsActive] = useState(true);
+    const [pageNumber, setPageNumber] = useState(1);
 
-        if (prevSearch !== nextSearch) {
-            this.setState({ status: Status.PENDING });
+    useEffect(() => {
+        if (!buttonIsActive) {
+            return alert('Searching data is out of valid range');
+        }
+    },[buttonIsActive])
 
-            try {
-                const response = await pixabayApi.fetchImages(nextSearch, 1, perPage);
-                const images = response.data.hits;
-                this.setState({ images, status: Status.RESOLVED });
-            } catch (error) {
-                this.setState({ error, status: Status.REJECTED });
-            }
-
-            this.setState({ pageNumber: 1 });
+    useEffect(() => {
+        setPageNumber(1);
+        if (searchingImage) {
+            const fetchResponse = async () => {
+            setStatus(Status.PENDING);
+            const response = await pixabayApi.fetchImages(searchingImage, 1, perPage);
+            setImages(response.data.hits);
+            setStatus(Status.RESOLVED);
         }
 
-        if (prevPage < pageNumber) {
-            if (!buttonIsActive) {
-                return alert('Searching data is out of valid range');
-            }
             try {
-                const response = await pixabayApi.fetchImages(nextSearch, pageNumber, perPage);
-                const totalPage = response.data.totalHits / perPage;
-                if (pageNumber > totalPage) {
-                    this.setState({ buttonIsActive: false });
-                }
-                const newImages = response.data.hits;
+            fetchResponse();
+        }
+        catch (error) {
+            setError(error);
+            setStatus(Status.REJECTED);
+        }
+        } 
 
-                this.setState((prevState) => ({ images: [...prevState.images, ...newImages] }))
+    }, [searchingImage]);
+
+    useEffect(() => {
+        if (pageNumber > 1 && searchingImage) {
+            const fetchResponseMore = async () => {
+                const response = await pixabayApi.fetchImages(searchingImage, pageNumber, perPage);
+                const totalPages = Math.floor(response.data.totalHits / perPage);
+            
+                if (pageNumber > totalPages) {
+                    setButtonIsActive(false);
+                }
+
+                const responseImages = response.data.hits;
+
+                setImages(prevImages => [...prevImages, ...responseImages]);
+            }
+
+            try {
+                fetchResponseMore();
             } catch (error) {
                 return <ImagesErrorView message={error.message} />;
             }
         }
+    }, [pageNumber, searchingImage])
+    
+
+    const handleLoadMoreBtnClick = () => {
+        setPageNumber(prevPageNumber => prevPageNumber + 1);
+    };
+
+    if (status === Status.PENDING) {
+        return <ImagesPendingView />;
     }
 
-    handleLoadMoreBtnClick = () => {
-
-        this.setState(({ pageNumber }) => ({ pageNumber: pageNumber + 1 }));
+    if (status === Status.REJECTED) {
+        return <ImagesErrorView message={error.message} />;
     }
 
-    render() {
-        const { images, error, status } = this.state;
-
-        if (status === 'pending') {
-            return <ImagesPendingView />;
-        }
-
-        if (status === 'rejected') {
-            return <ImagesErrorView message={error.message} />;
-        }
-
-        if (status === 'resolved') {
-            return <ImagesDataView images={images} onClick={this.handleLoadMoreBtnClick} />;
-        }
+    if (status === Status.RESOLVED) {
+        return <ImagesDataView images={images} onClick={handleLoadMoreBtnClick} />;
     }
 }
 
