@@ -1,16 +1,16 @@
-import { Component } from "react";
+import React from "react";
 import { ButtonWrapper } from "./Button.styled";
 import PropTypes from "prop-types";
 
-class Button extends Component {
-    render() {
-        return (
-        <ButtonWrapper type="button" onClick={this.props.onClick}>{this.props.children}</ButtonWrapper>
-    )}
+const Button = ({onClick, children}) => {
+    return (
+        <ButtonWrapper type="button" onClick={onClick}>{children}</ButtonWrapper>
+    )
 }
 
 export default Button;
 
 Button.propTypes = {
     onClick: PropTypes.func.isRequired,
+    children: PropTypes.node.isRequired
 }

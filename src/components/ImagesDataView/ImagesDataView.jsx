@@ -2,32 +2,26 @@ import GalleryItemImg from "components/GalleryItemImg";
 import { ImageGalleryList } from "components/ImageGallery/ImageGallery.styled";
 import ImageGalleryItem from "components/ImageGalleryItem";
 import Button from "components/Button";
-import { Component } from "react";
+import React, {useState} from "react";
 import Modal from "components/Modal";
 import PropTypes from "prop-types";
 
-class ImagesDataView extends Component {
-    state = {
-        showModal: false,
-        largeImageURL: '',
-        tags: '',
+const ImagesDataView = ({images, onClick}) => {
+
+    const [showModal, setShowModal] = useState(false);
+    const [largeImageURL, setLargeImageURL] = useState('');
+    const [tags, setTags] = useState('');
+
+    const toggleModal = () => {
+        setShowModal((prevShowModal) => !prevShowModal);
     }
 
-    toggleModal = () => {
-        this.setState(state => ({
-        showModal: !state.showModal
-        }
-        ))
+    const handleItemClick = (largeImageURL, tags) => {
+        setLargeImageURL(largeImageURL);
+        setTags(tags);
+        toggleModal();
     }
 
-    handleItemClick = (largeImageURL, tags) => {
-        this.setState({ largeImageURL, tags });
-        this.toggleModal();
-    }
-
-    render() {
-        const { images, onClick } = this.props;
-        const { largeImageURL, tags } = this.state;
         return (
         <div>
             {images.length === 0 ? <p>Images not found!</p> :
@@ -35,7 +29,10 @@ class ImagesDataView extends Component {
                 {
                 images.map(({id, largeImageURL, tags, webformatURL}) => {
                     return (
-                        <ImageGalleryItem key={id} onClick={this.handleItemClick} largeImageURL={largeImageURL} tags={tags}>
+                        <ImageGalleryItem key={id}
+                            onClick={handleItemClick}
+                            largeImageURL={largeImageURL}
+                            tags={tags}>
                             <GalleryItemImg
                                 url={webformatURL}
                                 description={tags}
@@ -47,16 +44,14 @@ class ImagesDataView extends Component {
                 <Button onClick={onClick}>Load more</Button>
             </ImageGalleryList>
             }
-            {this.state.showModal &&
+            {showModal &&
                 <Modal
-                onClose={this.toggleModal}>
+                onClose={toggleModal}>
                 <img src={largeImageURL} alt={tags} />
                 </Modal>
             }
         </div>
     )
-    }
-    
 }
 
 export default ImagesDataView;
